@@ -1,159 +1,124 @@
+const API_URL = 'http://localhost:5000/api';
+
+// Função para carregar os vídeos
+async function loadVideos() {
+    try {
+        const response = await fetch(`${API_URL}/videos`);
+        const videos = await response.json();
+        const container = document.querySelector('.video-carousel');
+        container.innerHTML = '';
+        
+        videos.forEach(video => {
+            const videoElement = createVideoElement(video);
+            container.appendChild(videoElement);
+        });
+    } catch (error) {
+        console.error('Erro ao carregar vídeos:', error);
+    }
+}
+
+// Função para criar elemento de vídeo
+function createVideoElement(video) {
+    const div = document.createElement('div');
+    div.className = 'video-item';
+    div.innerHTML = `
+        <div class="video-wrapper">
+            ${video.type === 'url' 
+                ? `<iframe src="${video.url}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
+                : `<video controls><source src="${video.url}" type="video/mp4"></video>`
+            }
+        </div>
+        <div class="video-actions">
+            <button class="delete-video" data-id="${video.id}">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+    
+    // Adicionar evento de clique para deletar
+    div.querySelector('.delete-video').addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (confirm('Tem certeza que deseja excluir este vídeo?')) {
+            try {
+                await fetch(`${API_URL}/videos/${video.id}`, {
+                    method: 'DELETE'
+                });
+                div.remove();
+            } catch (error) {
+                console.error('Erro ao deletar vídeo:', error);
+            }
+        }
+    });
+    
+    return div;
+}
+
+// Função para adicionar novo vídeo
+async function addVideo(videoData) {
+    try {
+        const response = await fetch(`${API_URL}/videos`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(videoData)
+        });
+        
+        if (response.ok) {
+            const newVideo = await response.json();
+            const container = document.querySelector('.video-carousel');
+            const videoElement = createVideoElement(newVideo);
+            container.appendChild(videoElement);
+        }
+    } catch (error) {
+        console.error('Erro ao adicionar vídeo:', error);
+    }
+}
+
+// Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
-    const videoCarousel = document.getElementById('videoCarousel');
-    const prevVideoBtn = document.getElementById('prevVideo');
-    const nextVideoBtn = document.getElementById('nextVideo');
-    const openNewVideoModalBtn = document.getElementById('openNewVideoModal');
-    const newVideoModal = document.getElementById('newVideoModal');
-    const closeNewVideoModalBtn = document.getElementById('closeNewVideoModal');
-    const cancelNewVideoBtn = document.getElementById('cancelNewVideo');
-    const saveNewVideoBtn = document.getElementById('saveNewVideo');
-    const videoTitleInput = document.getElementById('videoTitle');
-    const videoUrlInput = document.getElementById('videoUrl');
-    const videoLocalPathInput = document.getElementById('videoLocalPath');
-    const videoTypeUrlRadio = document.getElementById('videoTypeUrl');
-    const videoTypeLocalRadio = document.getElementById('videoTypeLocal');
-    const videoUrlGroup = document.getElementById('videoUrlGroup');
-    const videoLocalPathGroup = document.getElementById('videoLocalPathGroup');
-
-    let videos = JSON.parse(localStorage.getItem('videos')) || [
-        { id: 'v3', title: 'Nosso Vídeo Especial', type: 'local', src: 'assets/img/galeria/v3.mp4' } // Vídeo local v3.mp4
-    ];
-    let currentVideoIndex = 0;
-
-    function renderVideos() {
-        videoCarousel.innerHTML = '';
-        if (videos.length === 0) {
-            videoCarousel.innerHTML = '<p>Nenhum vídeo adicionado ainda. Adicione o primeiro!</p>';
-            return;
-        }
-
-        const video = videos[currentVideoIndex];
-        const videoElement = document.createElement('div');
-        videoElement.className = 'video-item fade-in';
-
-        let videoContent;
-        if (video.type === 'local') {
-            videoContent = `
-                <video controls>
-                    <source src="${video.src}" type="video/mp4">
-                    Seu navegador não suporta o elemento de vídeo.
-                </video>
-            `;
-        } else {
-            videoContent = `
-                <iframe src="${video.src}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            `;
-        }
-
-        videoElement.innerHTML = `
-            <h3>${video.title}</h3>
-            <div class="video-wrapper">
-                ${videoContent}
-            </div>
-            <button class="delete-video-button" data-id="${video.id}" title="Excluir Vídeo"><i class="fas fa-trash"></i></button>
-        `;
-        videoCarousel.appendChild(videoElement);
-
-        // Adicionar event listener para o botão de exclusão
-        videoElement.querySelector('.delete-video-button').addEventListener('click', (e) => {
-            const videoIdToDelete = e.currentTarget.getAttribute('data-id');
-            if (confirm('Tem certeza que deseja excluir este vídeo?')) {
-                deleteVideo(videoIdToDelete);
+    loadVideos();
+    
+    const form = document.getElementById('newVideoForm');
+    const videoTypeInputs = document.querySelectorAll('input[name="videoType"]');
+    const urlInput = document.getElementById('videoUrl');
+    const fileInput = document.getElementById('videoFile');
+    
+    // Mostrar/esconder campos baseado no tipo de vídeo
+    videoTypeInputs.forEach(input => {
+        input.addEventListener('change', (e) => {
+            if (e.target.value === 'url') {
+                urlInput.parentElement.style.display = 'block';
+                fileInput.parentElement.style.display = 'none';
+            } else {
+                urlInput.parentElement.style.display = 'none';
+                fileInput.parentElement.style.display = 'block';
             }
         });
-    }
-
-    function showNextVideo() {
-        currentVideoIndex = (currentVideoIndex + 1) % videos.length;
-        renderVideos();
-    }
-
-    function showPrevVideo() {
-        currentVideoIndex = (currentVideoIndex - 1 + videos.length) % videos.length;
-        renderVideos();
-    }
-
-    function deleteVideo(id) {
-        videos = videos.filter(video => video.id !== id);
-        localStorage.setItem('videos', JSON.stringify(videos));
-        currentVideoIndex = 0; // Resetar para o primeiro vídeo após exclusão
-        renderVideos();
-    }
-
-    function addVideo(title, src, type) {
-        const newVideo = { id: `v${Date.now()}`, title, type, src };
-        videos.push(newVideo);
-        localStorage.setItem('videos', JSON.stringify(videos));
-        currentVideoIndex = videos.length - 1; // Ir para o último vídeo adicionado
-        renderVideos();
-    }
-
-    // Event Listeners do Modal
-    openNewVideoModalBtn.addEventListener('click', () => {
-        newVideoModal.style.display = 'flex'; // Usar flex para centralizar
     });
-
-    closeNewVideoModalBtn.addEventListener('click', () => {
-        newVideoModal.style.display = 'none';
-        videoTitleInput.value = '';
-        videoUrlInput.value = '';
-        videoLocalPathInput.value = '';
-        videoTypeUrlRadio.checked = true; // Resetar para URL
-        videoUrlGroup.style.display = 'block';
-        videoLocalPathGroup.style.display = 'none';
-    });
-
-    cancelNewVideoBtn.addEventListener('click', () => {
-        newVideoModal.style.display = 'none';
-        videoTitleInput.value = '';
-        videoUrlInput.value = '';
-        videoLocalPathInput.value = '';
-        videoTypeUrlRadio.checked = true; // Resetar para URL
-        videoUrlGroup.style.display = 'block';
-        videoLocalPathGroup.style.display = 'none';
-    });
-
-    saveNewVideoBtn.addEventListener('click', () => {
-        const title = videoTitleInput.value.trim();
-        let src;
-        let type;
-
-        if (videoTypeUrlRadio.checked) {
-            src = videoUrlInput.value.trim();
-            type = 'url';
+    
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const type = document.querySelector('input[name="videoType"]:checked').value;
+        let url;
+        
+        if (type === 'url') {
+            url = urlInput.value.trim();
         } else {
-            src = videoLocalPathInput.value.trim();
-            type = 'local';
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Por favor, selecione um arquivo de vídeo');
+                return;
+            }
+            // Aqui você precisaria implementar o upload do arquivo
+            // Por enquanto, vamos apenas usar o nome do arquivo
+            url = file.name;
         }
-
-        if (title && src) {
-            addVideo(title, src, type);
-            newVideoModal.style.display = 'none';
-            videoTitleInput.value = '';
-            videoUrlInput.value = '';
-            videoLocalPathInput.value = '';
-            videoTypeUrlRadio.checked = true; // Resetar para URL
-            videoUrlGroup.style.display = 'block';
-            videoLocalPathGroup.style.display = 'none';
-        } else {
-            alert('Por favor, preencha o título e o link/caminho do vídeo.');
+        
+        if (url) {
+            await addVideo({ type, url });
+            form.reset();
+            document.getElementById('videoModal').style.display = 'none';
         }
     });
-
-    // Lógica para alternar campos de entrada com base no tipo de vídeo selecionado
-    videoTypeUrlRadio.addEventListener('change', () => {
-        videoUrlGroup.style.display = 'block';
-        videoLocalPathGroup.style.display = 'none';
-    });
-
-    videoTypeLocalRadio.addEventListener('change', () => {
-        videoUrlGroup.style.display = 'none';
-        videoLocalPathGroup.style.display = 'block';
-    });
-
-    prevVideoBtn.addEventListener('click', showPrevVideo);
-    nextVideoBtn.addEventListener('click', showNextVideo);
-
-    // Renderizar vídeos ao carregar a página
-    renderVideos();
 }); 

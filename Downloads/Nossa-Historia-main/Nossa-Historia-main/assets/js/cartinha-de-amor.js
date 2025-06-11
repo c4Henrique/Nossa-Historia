@@ -1,97 +1,104 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const loveLettersContainer = document.getElementById('loveLettersContainer');
-    const openNewLetterModalButton = document.getElementById('openNewLetterModal');
-    const newLetterModal = document.getElementById('newLetterModal');
-    const closeNewLetterModal = document.getElementById('closeNewLetterModal');
-    const saveNewLetterButton = document.getElementById('saveNewLetterButton');
-    const newLetterTitleInput = document.getElementById('newLetterTitle');
-    const newLetterContentInput = document.getElementById('newLetterContent');
+const API_URL = 'http://localhost:5000/api';
 
-    let loveLetters = JSON.parse(localStorage.getItem('loveLetters')) || [];
-
-    function renderLoveLetters() {
-        loveLettersContainer.innerHTML = '';
-        loveLetters.forEach((letter, index) => {
-            const letterCard = document.createElement('div');
-            letterCard.className = 'love-letter-card card';
-            letterCard.setAttribute('data-id', letter.id);
-            letterCard.innerHTML = `
-                <h3>${letter.title}</h3>
-                <p>${letter.content}</p>
-                <button class="delete-letter-button"><i class="fas fa-times"></i></button>
-            `;
-            loveLettersContainer.prepend(letterCard); // Adiciona no topo
-
-            // Forçar reflow para a animação de fade-in
-            void letterCard.offsetWidth;
-            letterCard.classList.add('show');
+// Função para carregar as cartas
+async function loadLetters() {
+    try {
+        const response = await fetch(`${API_URL}/love-letters`);
+        const letters = await response.json();
+        const container = document.querySelector('.love-letters-container');
+        container.innerHTML = '';
+        
+        letters.forEach(letter => {
+            const letterElement = createLetterElement(letter);
+            container.appendChild(letterElement);
         });
+    } catch (error) {
+        console.error('Erro ao carregar cartas:', error);
     }
+}
 
-    function saveLoveLetters() {
-        localStorage.setItem('loveLetters', JSON.stringify(loveLetters));
-    }
-
-    function addNewLetter(title, content) {
-        const newLetter = {
-            id: Date.now(),
-            title: title,
-            content: content
-        };
-        loveLetters.unshift(newLetter); // Adiciona no início do array
-        saveLoveLetters();
-        renderLoveLetters();
-    }
-
-    function deleteLoveLetter(id) {
-        loveLetters = loveLetters.filter(letter => letter.id !== id);
-        saveLoveLetters();
-        renderLoveLetters();
-    }
-
-    // Event Listeners
-    openNewLetterModalButton.addEventListener('click', () => {
-        newLetterModal.classList.add('show');
-    });
-
-    closeNewLetterModal.addEventListener('click', () => {
-        newLetterModal.classList.remove('show');
-        newLetterTitleInput.value = '';
-        newLetterContentInput.value = '';
-    });
-
-    newLetterModal.addEventListener('click', (event) => {
-        if (event.target === newLetterModal) {
-            newLetterModal.classList.remove('show');
-            newLetterTitleInput.value = '';
-            newLetterContentInput.value = '';
-        }
-    });
-
-    saveNewLetterButton.addEventListener('click', () => {
-        const title = newLetterTitleInput.value.trim();
-        const content = newLetterContentInput.value.trim();
-
-        if (title && content) {
-            addNewLetter(title, content);
-            newLetterModal.classList.remove('show');
-            newLetterTitleInput.value = '';
-            newLetterContentInput.value = '';
-        } else {
-            alert('Por favor, preencha o título e o conteúdo da carta.');
-        }
-    });
-
-    loveLettersContainer.addEventListener('click', (event) => {
-        if (event.target.closest('.delete-letter-button')) {
-            const letterCard = event.target.closest('.love-letter-card');
-            const letterId = parseInt(letterCard.getAttribute('data-id'));
-            if (confirm('Tem certeza que deseja excluir esta carta de amor?')) {
-                deleteLoveLetter(letterId);
+// Função para criar elemento de carta
+function createLetterElement(letter) {
+    const div = document.createElement('div');
+    div.className = 'love-letter-card card fade-in';
+    div.innerHTML = `
+        <h3>${letter.title}</h3>
+        <p>${letter.content}</p>
+        <button class="delete-letter-button" data-id="${letter.id}">
+            <i class="fas fa-trash"></i>
+        </button>
+    `;
+    
+    // Adicionar evento de clique para o botão de deletar
+    div.querySelector('.delete-letter-button').addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (confirm('Tem certeza que deseja excluir esta carta?')) {
+            try {
+                await fetch(`${API_URL}/love-letters/${letter.id}`, {
+                    method: 'DELETE'
+                });
+                div.remove();
+            } catch (error) {
+                console.error('Erro ao deletar carta:', error);
             }
         }
     });
+    
+    return div;
+}
 
-    // Renderiza as cartas ao carregar a página
-    renderLoveLetters();
+// Função para adicionar nova carta
+async function addLetter(title, content) {
+    try {
+        const response = await fetch(`${API_URL}/love-letters`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ title, content })
+        });
+        
+        if (response.ok) {
+            const newLetter = await response.json();
+            const container = document.querySelector('.love-letters-container');
+            const letterElement = createLetterElement({
+                id: newLetter.id,
+                title,
+                content
+            });
+            container.insertBefore(letterElement, container.firstChild);
+        }
+    } catch (error) {
+        console.error('Erro ao adicionar carta:', error);
+    }
+}
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+    loadLetters();
+    
+    // Modal de nova carta
+    const modal = document.getElementById('newLetterModal');
+    const addButton = document.querySelector('.add-letter-button');
+    const closeButton = document.querySelector('.close-modal');
+    const form = document.getElementById('newLetterForm');
+    
+    addButton.addEventListener('click', () => {
+        modal.style.display = 'block';
+    });
+    
+    closeButton.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+    
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const title = document.getElementById('letterTitle').value;
+        const content = document.getElementById('letterContent').value;
+        
+        await addLetter(title, content);
+        
+        form.reset();
+        modal.style.display = 'none';
+    });
 }); 
