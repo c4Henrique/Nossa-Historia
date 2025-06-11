@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://nossa-historia-jl87.onrender.com/api';
 
 // Função para carregar os vídeos
 async function loadVideos() {
