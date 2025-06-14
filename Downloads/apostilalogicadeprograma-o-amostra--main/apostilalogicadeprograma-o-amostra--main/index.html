@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apostilas para Lógica de Programação</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="hero">
+        <div class="hero-overlay"></div>
+    </header>
+
+    <main>
+        <div class="card-hero">
+            <h1>Apostilas para Lógica de Programação <span class="pin">📌</span></h1>
+            <p>Seja muito bem-vindo(a)! Aqui é uma área de membros onde você terá acesso a todas as nossas apostilas de atividades práticas para ampliar seu conhecimento e experiência em lógica de programação. Nós subdividimos todo o conteúdo em módulos diferentes, para tornar tudo mais organizado. Fique à vontade para explorar todas essas questões, e dar um upgrade nas suas skills! <span class="rocket">🚀</span></p>
+            <a href="https://pay.kiwify.com.br/c4pAnqB" class="buy-button" target="_blank">Comprar Agora</a>
+            <div class="promo-section">
+                <h2 class="promo-title">🔥 Oferta por tempo limitado!</h2>
+                <p class="promo-subtitle">Garanta seu acesso exclusivo a mais de 300 questões de lógica de programação e domine de vez:</p>
+                <ul class="promo-features">
+                    <li>✅ 100 fáceis • 100 médias • 100 difíceis</li>
+                    <li>✅ Gabarito com explicações claras</li>
+                    <li>✅ Aumente suas chances em concursos, entrevistas e provas</li>
+                </ul>
+                <div class="promo-warning">
+                    <p>⚠️ Vagas limitadas — depois pode sair do ar!</p>
+                    <p>🎯 Clique agora e comece sua evolução ainda hoje!</p>
+                </div>
+            </div>
+        </div>
+
+        <section class="levels-section">
+            <div class="levels-container">
+                <div class="level-card">
+                    <img src='Fácil.png' alt="Nível Fácil" class="level-image">
+                    <div class="level-info">
+                        <p><span class="emoji">🪙</span> 100 tarefas fáceis</p>
+                        <a href="https://pay.kiwify.com.br/c4pAnqB" class="level-button" target="_blank">Fáceis</a>
+                    </div>
+                </div>
+
+                <div class="level-card">
+                    <img src='Médio.png' alt="Nível Médio" class="level-image">
+                    <div class="level-info">
+                        <p><span class="emoji">🔥</span> 100 tarefas medianas</p>
+                        <a href="https://pay.kiwify.com.br/c4pAnqB" class="level-button" target="_blank">Médias</a>
+                    </div>
+                </div>
+
+                <div class="level-card">
+                    <img src='Difícil.png' alt="Nível Difícil" class="level-image">
+                    <div class="level-info">
+                        <p><span class="emoji">🎯</span> 100 tarefas difíceis</p>
+                        <a href="https://pay.kiwify.com.br/c4pAnqB" class="level-button" target="_blank">Difíceis</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>Apostila para logica de programação</p>
+    </footer>
+
+    <!-- Modal -->
+    <div id="promoModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h1 class="access-denied">🚫 Acesso Restrito</h1>
+            <p class="restricted-message">Essa área é exclusiva para alunos que adquiriram o material.</p>
+            <div class="access-info">
+                <p>🎯 Para liberar o acesso completo às mais de 300 questões de lógica de programação, é necessário realizar a compra.</p>
+                <p>Após a confirmação do pagamento, o acesso será liberado automaticamente.</p>
+            </div>
+            <div class="modal-buttons">
+                <a href="https://pay.kiwify.com.br/c4pAnqB" class="modal-buy-button" target="_blank">👉 Clique aqui para comprar e liberar o acesso imediato</a>
+                <button class="modal-back-button">Voltar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get modal elements
+        const modal = document.getElementById('promoModal');
+        const closeButton = document.querySelector('.close-button');
+        const backButton = document.querySelector('.modal-back-button');
+        const levelButtons = document.querySelectorAll('.level-button');
+        const buyButton = document.querySelector('.buy-button');
+
+        // Function to show modal
+        function showModal() {
+            modal.style.display = 'flex';
+        }
+
+        // Function to hide modal
+        function hideModal() {
+            modal.style.display = 'none';
+        }
+
+        // Add click event to all buttons
+        levelButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                showModal();
+            });
+        });
+
+        buyButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            showModal();
+        });
+
+        // Close modal when clicking close button, back button or outside the modal
+        closeButton.addEventListener('click', hideModal);
+        backButton.addEventListener('click', hideModal);
+        window.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                hideModal();
+            }
+        });
+    </script>
+</body>
+</html> 
